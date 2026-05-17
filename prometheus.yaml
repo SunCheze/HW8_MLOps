@@ -1,0 +1,25 @@
+# prometheus.yaml
+# Настройка Prometheus для сбора метрик ML-сервиса с учетом OpenSLO подхода
+
+global:
+  scrape_interval: 15s # Смотрим часто, так как у нас пиковая нагрузка 10k RPS
+  evaluation_interval: 15s
+
+rule_files:
+  # - "slo_rules.yml" (например, 1% бюджета сгорает за 1 час -> Critical Alert)
+
+scrape_configs:
+  - job_name: 'ml-recommender-service'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['ml-service:8000'] # Наш сервис рекомендаций
+    
+    # Пример того, какие метрики мы ожидаем от сервиса (для документации):
+    # ml_inference_request_duration_seconds_bucket{le="0.05", ...}
+    # ml_inference_request_duration_seconds_bucket{le="0.2", ...} <- Наш SLO порог (200ms)
+    # ml_inference_request_duration_seconds_count
+    # ml_inference_request_duration_seconds_sum
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
